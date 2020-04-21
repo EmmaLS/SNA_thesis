@@ -22,12 +22,11 @@ translation_search1 = search_tweets2(c("\"translation\"",
 translation_search = rbind(translation_search1, translation_search2) %>%
 	distinct()
 # Create dataframe for analysis:
-
-tweets_df = data.frame(translation_search$user_id, translation_search$screen_name, translation_search$created_at, translation_search$text, stringsAsFactors = FALSE)
+tweets_df = data.frame(translation_search$user_id, translation_search$screen_name, 
+		translation_search$created_at, translation_search$text, stringsAsFactors = FALSE)
 names(tweet_df) = c(“user_id”, “screen_name”, “created_at”, “tweet_text”)
 
 # Get friends and followers from top 100 tweeters in dataset:
-
 top_tweeters =  as.data.frame(table(tweets_df$user_id)) 
 top_tweeters = arrange(top_tweeters, desc(Freq))
 network = as.vector(top_tweeters[['Var1']])
@@ -124,11 +123,11 @@ degree_df = data.frame(names$screen_name, g.outd, g.ind, row.names = c())
 names(degree_df) = c("Screen_Name", "Out_Degree", "In_Degree")
 out_deg = degree(filtered_g, mode = c("out"))
 plot.igraph(filtered_g, vertex.size = sqrt(out_deg)+1, vertex.color = "blue", vertex.label = NA, asp = 0, edge.arrow.size = 0.2)
-in_deg = degree(filtered_g2, mode = c("in"))
-plot.igraph(filtered_g2, vertex.size = sqrt(in_deg)+1, vertex.color = "blue", vertex.label = NA, asp = 0, edge.arrow.size = 0.2)
+in_deg = degree(filtered_g, mode = c("in"))
+plot.igraph(filtered_g, vertex.size = sqrt(in_deg)+1, vertex.color = "blue", vertex.label = NA, asp = 0, edge.arrow.size = 0.2)
 
 # Calculate betweenness and plot with vertex size based on betweenness:
-g.b = betweenness(filtered_g2, directed = TRUE)
+g.b = betweenness(filtered_g, directed = TRUE)
 g.b_df = as.data.frame(g.b, names_network$screen_name)
 g.b_df = g.b_df %>% 
   mutate("screen_name" = names_network$screen_name)
@@ -137,125 +136,122 @@ which.max(g.b)
 g.b_df = g.b_df[order(-g.b_df$betweenness),]
 
 head(g.b_df)
-plot(filtered_g2, 
+plot(filtered_g, 
      edge.color = 'black',
      vertex.size = sqrt(g.b)+1,
      vertex.label = NA,
      vertex.color = "blue",
      edge.arrow.size = 0.05,
-     layout = layout_nicely(filtered_g2),
-     main = "TEF Network Betweenness")
-##betweenness
-btw = betweenness(filtered_g2)
+     layout = layout_nicely(filtered_g))
+
 # Get 0.99 quantile of betweenness 
-betweenness_q99 <- quantile(btw, 0.90)
+btw = betweenness(filtered_g)
+betweenness_q99 = quantile(btw, 0.90)
 
 # Get top 1% of vertices by betweenness
-top_btw <- btw[btw > betweenness_q99]
+top_btw = btw[btw > betweenness_q99]
 
 # Transform betweenness: add 2 then take natural log
-transformed_btw <- log(btw + 2)
+transformed_btw = log(btw + 2)
 
 # Make transformed_btw the size attribute of the vertices
-V(filtered_g2)$size <- transformed_btw
+V(filtered_g)$size = transformed_btw
 
 # Plot the graph
 plot(
-  filtered_g2, vertex.label = NA, edge.arrow.width = 0.2,
-  edge.arrow.size = 0.0, vertex.color = "blue", main = "TEF Network Betweenness"
-)
+  filtered_g, vertex.label = NA, edge.arrow.width = 0.2,
+  edge.arrow.size = 0.0, vertex.color = "blue")
 
 # Subset nodes for betweenness greater than 0.99 quantile
-vertices_high_btw <- V(filtered_g2)[btw > betweenness_q99]
+vertices_high_btw <- V(filtered_g)[btw > betweenness_q99]
 
 # Induce a subgraph of the vertices with high betweenness
-filtered_g2_subgraph <- induced_subgraph(filtered_g2, vertices_high_btw)
+filtered_g_subgraph <- induced_subgraph(filtered_g, vertices_high_btw)
 
 # Plot the subgraph
-plot.igraph(filtered_g2_subgraph, edge.arrow.size = 0.1, vertex.label.cex = 0.8, vertex.color = "skyblue", asp = 0, main = "TEF Top Betweenness")
+plot.igraph(filtered_g_subgraph, edge.arrow.size = 0.1, vertex.label.cex = 0.8, 
+	vertex.color = "skyblue", asp = 0, main = "TEF Top Betweenness")
 
-#create table including tweet count and all centrality measures
+# Create table including tweet count and all centrality measures
 cent_measures = cbind(g.ind, g.outd, g.b)
 names(cent_measures) = c("In_Degree", "Out_Degree", "Betweenness")
 merged_names = merge(tweet_count, by.x = "Var1", names_anon, by.y = "user_id")
-merge_dgs2 = merge(merged_names, by.x = "screen_name", cent_measures_names, by.y = "rowname")
+merge_dgs2 = merge(merged_names, by.x = "screen_name", cent_measures, by.y = "rowname")
 tweet_table2 = data.frame(merge_dgs2$anon, merge_dgs2$Freq, merge_dgs2$In_Degree.x, merge_dgs2$Out_Degree.x, merge_dgs2$Betweenness) 
-names(tweet_table2) = c("ID", "Number", "In_Degree", "Out_Degree", "Eigen_Vector", "Betweenness")
-#arrange by number of tweets and create csv file
+names(tweet_table2) = c("ID", "Number", "In_Degree", "Out_Degree", "Betweenness")
+
+# Arrange by number of tweets and create csv file
 tweet_table2 %>% 
   arrange(desc(Number))
 write_as_csv(tweet_table2, "anon_table2", na = "", fileEncoding = "UTF-8")
 
 
-##eigen centrality
-V(filtered_g2)$name = names_vector
-g.ec <- eigen_centrality(filtered_g2)
+## Eigen centrality and plot (not used in thesis)
+V(filtered_g)$name = names_vector
+g.ec = eigen_centrality(filtered_g)
 which.max(g.ec$vector)
 g.ec_df = as.data.frame(g.ec, row.names = c())
 g.ec_df = g.ec_df[order(-g.ec_df$vector),]
-write.csv(g.ec_df, file = "TEF Eigen Centrality.csv", row.names = TRUE)
-plot(filtered_g2,
+
+plot(filtered_g,
      vertex.label = NA,
   vertex.color = "blue", 
   vertex.label.cex = 0.6,
   vertex.size = 25*(g.ec$vector),
   edge.arrow.size = 0.1,
-  edge.color = 'gray88',
-  main = "TEF Network Eigen Centrality")
-#get eigen-centrality
-ec = eigen_centrality(filtered_g2, directed = TRUE)$vector
+  edge.color = 'gray88')
 
 # Get 0.99 quantile of eigen-centrality
-eigen_centrality_q99 <- quantile(ec, 0.90)
+eigen_centrality_q99 = quantile(g.ec, 0.90)
 
 # Subset nodes for eigen centrality greater than 0.99 quantile
-vertices_high_ec <- V(filtered_g2)[ec > eigen_centrality_q99]
+vertices_high_ec = V(filtered_g)[g.ec > eigen_centrality_q99]
 
 # Induce a subgraph of the vertices with high ec
-filtered_g2_subgraph2 <- induced_subgraph(filtered_g2, vertices_high_ec)
+filtered_g2_subgraph2 = induced_subgraph(filtered_g2, vertices_high_ec)
 
 # Plot the subgraph
-plot.igraph(filtered_g2_subgraph2, edge.arrow.size = 0.1, vertex.label.cex = 0.8, vertex.color = "skyblue", asp = 0, main = "TEF Top Eigen Centrality")
+plot.igraph(filtered_g2_subgraph2, edge.arrow.size = 0.1, vertex.label.cex = 0.8, 
+	vertex.color = "skyblue", asp = 0)
 
-##calculate communities using edge betweenness and plot
-V(filtered_g2)$size = 4
-gc = edge.betweenness.community(filtered_g2)
+# Calculate communities using edge betweenness and plot
+V(filtered_g)$size = 4
+gc = edge.betweenness.community(filtered_g)
 sizes(gc)
+plot(gc, filtered_g, vertex.label = NA, edge.arrow.size = 0.2, asp = 0)
 
-plot(gc, filtered_g2, vertex.label = NA, edge.arrow.size = 0.2, asp = 0, main = "TEF Communities")
-modularity(gc)
-
-##using k-core to show clustering
-coreness = graph.coreness(filtered_g2)
+# Using k-core to show clustering
+coreness = graph.coreness(filtered_g)
 table(coreness)
 maxCoreness = max(coreness)
 maxCoreness
 
-##use coreness to colour vertices
-V(filtered_g2)$color = coreness + 1
-V(filtered_g2)$size = 8
-plot.igraph(filtered_g2, asp = 0, vertex.label = coreness)
-
+# Use coreness to colour vertices
+V(filtered_g)$color = coreness + 1
+V(filtered_g)$size = 8
+plot.igraph(filtered_g, asp = 0, vertex.label = coreness)
 colors = rainbow(maxCoreness)
 op = par(mar = rep(0, 4))
-plot.igraph(filtered_g2, vertex.label = coreness, vertex.color = colors[coreness], asp = 0, edge.arrow.size = 0.1, vertex.label.cex = 0.9)
-##peeling away layers of k-core values
-V(filtered_g2)$name = coreness
-V(filtered_g2)$color = colors[coreness]
-V(filtered_g2)$label.cex = 0.7
-kcg = filtered_g2
-kcg_1 = induced.subgraph(filtered_g2, vids = which(coreness > 5))
-kcg_2 = induced.subgraph(filtered_g2, vids = which(coreness > 10))
-kcg_3 = induced.subgraph(filtered_g2, vids = which(coreness > 15))
-kcg_4 = induced.subgraph(filtered_g2, vids = which(coreness > 20))
-kcg_5 = induced.subgraph(filtered_g2, vids = which(coreness > 25))
-kcg_6 = induced.subgraph(filtered_g2, vids = which(coreness > 30))
-kcg_7 = induced.subgraph(filtered_g2, vids = which(coreness > 35))
-kcg_8 = induced.subgraph(filtered_g2, vids = which(coreness >= 38))
-##plot highest k-core
+plot.igraph(filtered_g, vertex.label = coreness, vertex.color = colors[coreness], asp = 0, 
+	edge.arrow.size = 0.1, vertex.label.cex = 0.9)
+# Peeling away layers of k-core values
+V(filtered_g)$name = coreness
+V(filtered_g)$color = colors[coreness]
+V(filtered_g)$label.cex = 0.7
+kcg = filtered_g
+kcg_1 = induced.subgraph(filtered_g, vids = which(coreness > 5))
+kcg_2 = induced.subgraph(filtered_g, vids = which(coreness > 10))
+kcg_3 = induced.subgraph(filtered_g, vids = which(coreness > 15))
+kcg_4 = induced.subgraph(filtered_g, vids = which(coreness > 20))
+kcg_5 = induced.subgraph(filtered_g, vids = which(coreness > 25))
+kcg_6 = induced.subgraph(filtered_g, vids = which(coreness > 30))
+kcg_7 = induced.subgraph(filtered_g, vids = which(coreness > 35))
+kcg_8 = induced.subgraph(filtered_g, vids = which(coreness >= 38))
+
+# Plot highest k-core
 plot(kcg_8, edge.arrow.size = 0.1, edge.arrow.width = 0.1, layout = layout_nicely(kcg_8))
 
-# plot highest k cores with anonymised names
+# plot top k cores with anonymised names
 V(filtered_g2)$name = anon_vector
 V(filtered_g2)$color = colors[coreness]
 V(filtered_g2)$label.cex = 0.8
