@@ -100,43 +100,34 @@ plot(filtered_g,
     vertex.label.font = 2,
     layout = layout)
 
-# Set no. of tweets as vertex size and plot
+# Set no. of tweets as vertex size and plot:
 freq_tweet = tweet_count$Freq
-transformed_freq <- log(freq_tweet + 2)
 V(filtered_g2)$color = "blue"
 plot.igraph(filtered_g, vertex.size = sqrt(freq_tweet)+1, vertex.label = NA, edge.arrow.size = 0.2)
 
-#trying to create subgraph using no. of tweets - not worked yet
-V(filtered_g2)$size = sqrt(freq_tweet) + 1
-V(filtered_g2)$size
-remove.vertex.attribute(filtered_g2, "size")
-as.numeric(freq_tweet)
-##set no. of tweets as attribute
+# Set no. of tweets as attribute and create subgraph:
 
-V(filtered_g)$tweet_count
-
-vertex_attr(filtered_g, "tweet_count", index = V(filtered_g)) = freq_tweet
+vertex_attr(filtered_g, "tweet_count", index = V(filtered_g)) = freq_tweet)
 V(filtered_g)$size = sqrt(freq_tweet) + 1
 freq_tweeters = induced.subgraph(filtered_g, vids = which(V(filtered_g)$tweet_count >= 30))
-
 V(filtered_g2)$name = anon_vector
 V(filtered_g2)$size = 8
 plot.igraph(freq_tweeters, edge.arrow.size = 0.2, vertex.color = "skyblue", asp = 0, main = "TEF Tweets no. > 30")
-#calculate centrality measures
-In degree
-Out degree
-Calculate in-degree, out-degree, plot:
-g.outd <- as.data.frame(degree(filtered_g2, mode = c("out")))
+
+# Calculate centrality measures
+# Calculate in-degree, out-degree, create dataframe and plot:
+g.outd = as.data.frame(degree(filtered_g, mode = c("out")))
 which.max(g.outd)
-g.ind = as.data.frame(degree(filtered_g2, mode = c("in")))
+g.ind = as.data.frame(degree(filtered_g, mode = c("in")))
 which.max(g.ind)
 degree_df = data.frame(names$screen_name, g.outd, g.ind, row.names = c())
 names(degree_df) = c("Screen_Name", "Out_Degree", "In_Degree")
-out_deg = degree(filtered_g2, mode = c("out"))
-plot.igraph(filtered_g2, vertex.size = sqrt(out_deg)+1, vertex.color = "blue", vertex.label = NA, asp = 0, edge.arrow.size = 0.2, main = "TEF Network Out Degree")
+out_deg = degree(filtered_g, mode = c("out"))
+plot.igraph(filtered_g, vertex.size = sqrt(out_deg)+1, vertex.color = "blue", vertex.label = NA, asp = 0, edge.arrow.size = 0.2)
 in_deg = degree(filtered_g2, mode = c("in"))
-plot.igraph(filtered_g2, vertex.size = sqrt(in_deg)+1, vertex.color = "blue", vertex.label = NA, asp = 0, edge.arrow.size = 0.2, main = "TEF Network In Degree")
-Calculate betweenness and plot vertex size based on betweenness:
+plot.igraph(filtered_g2, vertex.size = sqrt(in_deg)+1, vertex.color = "blue", vertex.label = NA, asp = 0, edge.arrow.size = 0.2)
+
+# Calculate betweenness and plot with vertex size based on betweenness:
 g.b = betweenness(filtered_g2, directed = TRUE)
 g.b_df = as.data.frame(g.b, names_network$screen_name)
 g.b_df = g.b_df %>% 
