@@ -1,3 +1,4 @@
+`
 # SNA_thesis
 # Social network analysis used in PhD thesis
 # Create token to access Twitter API:
@@ -257,5 +258,5 @@ V(filtered_g2)$color = colors[coreness]
 V(filtered_g2)$label.cex = 0.8
 kcg_7 = induced.subgraph(filtered_g2, vids = which(coreness > 35))
 plot.igraph(kcg_7, edge.arrow.size = 0.1, layout = lay[which = coreness > 35,], asp = 0, main = "k-cores 36-38")
-
+`
 
